@@ -1,0 +1,29 @@
+# Freebuff
+.freebuff/
+
+# Node (por si se reintenta un build step)
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Artifacts viejos
+web/
+nul
+server.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python (gate + scripts)
+__pycache__/
+*.pyc
+*.pyo
+*$py.class

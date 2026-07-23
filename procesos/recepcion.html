@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recepción de Insumos — Planta de Semillas Peletizadas</title>
+  <meta name="description" content="El proceso 01/07 de la Planta de Semillas Peletizadas: ingreso, codificación de lotes y arranque del grafo de trazabilidad bidireccional.">
+  <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link rel="canonical" href="/procesos/recepcion.html">
+  <link rel="alternate" hreflang="es" href="/procesos/recepcion.html" />
+  <link rel="alternate" hreflang="en" href="/procesos/en/reception.html" />
+  <meta property="og:title" content="Recepción de Insumos — Planta de Semillas Peletizadas">
+  <meta property="og:description" content="El proceso 01/07 de la Planta de Semillas Peletizadas: ingreso, codificación de lotes y arranque del grafo de trazabilidad bidireccional.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="/procesos/recepcion.html">
+  <meta property="og:image" content="/assets/img/og-image.png">
+  <meta property="og:locale" content="es_ES">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Recepción de Insumos — Planta de Semillas Peletizadas">
+  <meta name="twitter:description" content="El proceso 01/07 de la Planta de Semillas Peletizadas: ingreso, codificación de lotes y arranque del grafo de trazabilidad bidireccional.">
+  <meta name="twitter:image" content="/assets/img/og-image.png">
+
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="../index.html">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3 L19 14 a8 7 0 1 1 -14 0 z" fill="#c19a3b"/><path d="M10 13 q2 -2 4 0" stroke="#0c1f17" stroke-width="1.4" fill="none" stroke-linecap="round"/><circle cx="12" cy="15" r="1" fill="#0c1f17"/></svg>
+        </span>
+        <span class="brand__text">Planta de Semillas Peletizadas<small>Instituto de Investigación del Tabaco</small></span>
+      </a>
+      <nav class="lang-toggle" aria-label="Idioma">
+        <a href="/procesos/recepcion.html" data-lang="es">ES</a>
+        <a href="/procesos/en/reception.html" data-lang="en">EN</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="proc-hero">
+      <div class="container">
+        <a class="proc-hero__back" href="../index.html">Inicio</a>
+        <p class="eyebrow">Proceso 01 / 07</p>
+        <h1>Recepción de Insumos y Semilla Base</h1>
+        <p class="proc-hero__lede">Cada saco de semilla cruda y cada insumo que entra a la planta se vuelve un lote en el sistema. Es el kilómetro cero del grafo de trazabilidad: todo lo que pase después queda encadenado hacia atrás, hacia este nodo.</p>
+        <div class="proc-hero__meta">
+          <span class="meta-chip meta-chip--ink">Almacén de Materia Prima</span>
+          <span class="meta-chip">Almacenero</span>
+          <span class="meta-chip">Continuo</span>
+          <span class="meta-chip">Origen del grafo</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="container proc-body">
+      <div class="depth-grid" data-reveal>
+        <article class="depth-block depth-block--simple">
+          <p class="depth-block__label">En simple</p>
+          <p>Llega la semilla cruda y los insumos al almacén. Cada saco se codifica con un identificador único y queda asociado a su proveedor, su fecha y su peso. A partir de acá, el sistema puede reconstruir todo el linaje del lote, hacia atrás y hacia adelante.</p>
+        </article>
+        <article class="depth-block depth-block--detail">
+          <p class="depth-block__label">En detalle</p>
+          <p>El almacenero registra la entrada de cada partida de semilla base desnuda y de cada insumo (polímeros, fungicidas, arcilla inerte) con tres atributos inmutables: <strong>código de lote</strong>, <strong>fecha de recepción</strong> y <strong>proveedor</strong>. La unidad de inventario no es la bolsa ni el kilogramo: es el lote. Cualquier transformación posterior queda registrada como una arista del grafo dirigido que apunta hacia este nodo. Esto permite reconstruir el linaje completo con sola una sentencia SQL estructurada.</p>
+        </article>
+      </div>
+
+      <div class="io-grid" data-reveal>
+        <div>
+          <p class="io__heading">Entradas al proceso</p>
+          <div class="io__list">
+            <span class="io__item">Semilla base desnuda</span>
+            <span class="io__item">Polímeros</span>
+            <span class="io__item">Fungicidas</span>
+            <span class="io__item">Arcilla inerte</span>
+            <span class="io__item">Documentación del proveedor</span>
+          </div>
+        </div>
+        <div>
+          <p class="io__heading">Salidas</p>
+          <div class="io__list">
+            <span class="io__item io__item--out">Lote con código único</span>
+            <span class="io__item io__item--out">Inventario actualizado</span>
+            <span class="io__item io__item--out">Orden de producción generada</span>
+          </div>
+        </div>
+      </div>
+
+      <article class="depth-block depth-block--data" data-reveal>
+        <p class="depth-block__label">Datos capturados</p>
+        <table class="telemetry">
+          <caption>Telemetría del lote en recepción</caption>
+          <thead>
+            <tr><th>Parámetro</th><th>Unidad</th><th>Rango típico</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Código de lote</td><td>alfa-numérico</td><td>LOT-YYYY-MMDD-Axxx</td></tr>
+            <tr><td>Fecha de recepción</td><td>YYYY-MM-DD</td><td>automático</td></tr>
+            <tr><td>Proveedor</td><td>catálogo</td><td>5 proveedores activos</td></tr>
+            <tr><td>Peso neto</td><td>kg</td><td>20 · 25 · 1000 (big-bag)</td></tr>
+            <tr><td>Humedad al ingreso</td><td>%</td><td>9 – 14</td></tr>
+            <tr><td>Presentación</td><td>enum</td><td>saco · caja · big-bag</td></tr>
+          </tbody>
+        </table>
+      </article>
+
+      <a class="next-step" href="pre-limpieza.html">
+        <div>
+          <p class="next-step__label">Continúa con el paso 02</p>
+          <p class="next-step__title">Prelimpieza</p>
+        </div>
+        <span class="next-step__arrow">→</span>
+      </a>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div>
+          <p class="footer__heading">Planta de Semillas Peletizadas</p>
+          <p>Sitio informativo bilingüe sobre los procesos del Instituto de Investigación del Tabaco, La Habana.</p>
+        </div>
+        <div>
+          <p class="footer__heading">Procesos</p>
+          <ul>
+            <li><a href="../procesos/recepcion.html">Recepción</a></li>
+            <li><a href="../procesos/peletizacion.html">Peletización</a></li>
+            <li><a href="../procesos/envasado.html">Envasado</a></li>
+            <li><a href="../procesos/control-calidad.html">Control de calidad</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer__heading">Idiomas</p>
+          <ul>
+            <li><a href="../index.html">Español</a></li>
+            <li><a href="../en/index.html">English</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer__heading">Documento de origen</p>
+          <p class="footer__small">Universidad de las Ciencias Informáticas · 2026</p>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <span>© Instituto de Investigación del Tabaco · 2026</span>
+        <span>Sitio informativo · no transaccional</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>

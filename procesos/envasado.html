@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Envasado — Planta de Semillas Peletizadas</title>
+  <meta name="description" content="Proceso 05/07 de la Planta de Semillas Peletizadas: pesaje, sellado y etiquetado del saco con su código de trazabilidad. El operario de planta opera la balanza calibrada y la selladora térmica.">
+  <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link rel="canonical" href="/procesos/envasado.html">
+  <link rel="alternate" hreflang="es" href="/procesos/envasado.html" />
+  <link rel="alternate" hreflang="en" href="/procesos/en/packaging.html" />
+  <meta property="og:title" content="Envasado — Planta de Semillas Peletizadas">
+  <meta property="og:description" content="Proceso 05/07 de la Planta de Semillas Peletizadas: pesaje, sellado y etiquetado del saco con su código de trazabilidad. El operario de planta opera la balanza calibrada y la selladora térmica.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="/procesos/envasado.html">
+  <meta property="og:image" content="/assets/img/og-image.png">
+  <meta property="og:locale" content="es_ES">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Envasado — Planta de Semillas Peletizadas">
+  <meta name="twitter:description" content="Proceso 05/07 de la Planta de Semillas Peletizadas: pesaje, sellado y etiquetado del saco con su código de trazabilidad. El operario de planta opera la balanza calibrada y la selladora térmica.">
+  <meta name="twitter:image" content="/assets/img/og-image.png">
+
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="../index.html">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3 L19 14 a8 7 0 1 1 -14 0 z" fill="#c19a3b"/><path d="M10 13 q2 -2 4 0" stroke="#0c1f17" stroke-width="1.4" fill="none" stroke-linecap="round"/><circle cx="12" cy="15" r="1" fill="#0c1f17"/></svg>
+        </span>
+        <span class="brand__text">Planta de Semillas Peletizadas<small>Instituto de Investigación del Tabaco</small></span>
+      </a>
+      <nav class="lang-toggle" aria-label="Idioma">
+        <a href="/procesos/envasado.html" data-lang="es">ES</a>
+        <a href="/procesos/en/packaging.html" data-lang="en">EN</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="proc-hero">
+      <div class="container">
+        <a class="proc-hero__back" href="../index.html">Inicio</a>
+        <p class="eyebrow">Proceso 05 / 07</p>
+        <h1>Envasado</h1>
+        <p class="proc-hero__lede">Los pellets secos se pesan y sellan en sacos. Cada saco se etiqueta con el código del lote de origen. Cualquier auditor puede escanear ese código y reconstruir el linaje completo.</p>
+        <div class="proc-hero__meta">
+          <span class="meta-chip">Envasado y etiquetado</span>
+          <span class="meta-chip">Operario de planta</span>
+          <span class="meta-chip">~5 min por saco</span>
+          <span class="meta-chip">Trazabilidad impresa</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="container proc-body">
+      <div class="depth-grid" data-reveal>
+        <article class="depth-block depth-block--simple">
+          <p class="depth-block__label">En simple</p>
+          <p>Cada saco se llena con la cantidad exacta, se sella y se rotula con un código único. Ese código es el documento de identidad del lote.</p>
+        </article>
+        <article class="depth-block depth-block--detail">
+          <p class="depth-block__label">En detalle</p>
+          <p>El operario trabaja con una balanza calibrada y una selladora térmica. El sistema imprime la etiqueta in situ, con el código del lote, fecha de envasado y lote origen. La balanza rechaza cualquier saco fuera del rango permitido (±25 g sobre cible de 25 kg) — esos sacos vuelven al flujo, no salen al almacén. El sello térmico incluye un código QR que apunta a una URL con el árbol de trazabilidad completo (cliente → servidor cuando esté en producción).</p>
+        </article>
+      </div>
+
+      <div class="io-grid" data-reveal>
+        <div>
+          <p class="io__heading">Entradas</p>
+          <div class="io__list">
+            <span class="io__item">Pellet seco</span>
+            <span class="io__item">Saco vacío</span>
+          </div>
+        </div>
+        <div>
+          <p class="io__heading">Salidas</p>
+          <div class="io__list">
+            <span class="io__item io__item--out">Saco sellado</span>
+            <span class="io__item io__item--out">Etiqueta con código QR</span>
+          </div>
+        </div>
+      </div>
+
+      <article class="depth-block depth-block--data" data-reveal>
+        <p class="depth-block__label">Datos capturados</p>
+        <table class="telemetry">
+          <caption>Telemetría por saco</caption>
+          <thead><tr><th>Parámetro</th><th>Unidad</th><th>Rango / valor</th></tr></thead>
+          <tbody>
+            <tr><td>Peso del saco</td><td>kg</td><td>25 ± 0.025</td></tr>
+            <tr><td>Código del lote</td><td>alfa-numérico</td><td>LOT-…-Axxx</td></tr>
+            <tr><td>Fecha de envasado</td><td>YYYY-MM-DD</td><td>automático</td></tr>
+            <tr><td>Lote origen</td><td>alfa-numérico</td><td>mismo que el pellet</td></tr>
+            <tr><td>Operario</td><td>user_id</td><td>firma digital</td></tr>
+          </tbody>
+        </table>
+      </article>
+
+      <a class="next-step" href="control-calidad.html">
+        <div>
+          <p class="next-step__label">Continúa con el paso 06</p>
+          <p class="next-step__title">Control de Calidad</p>
+        </div>
+        <span class="next-step__arrow">→</span>
+      </a>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div>
+          <p class="footer__heading">Planta de Semillas Peletizadas</p>
+          <p>Sitio informativo sobre los procesos del IIT.</p>
+        </div>
+        <div>
+          <p class="footer__heading">Procesos</p>
+          <ul>
+            <li><a href="../procesos/recepcion.html">Recepción</a></li>
+            <li><a href="../procesos/peletizacion.html">Peletización</a></li>
+            <li><a href="../procesos/envasado.html">Envasado</a></li>
+            <li><a href="../procesos/control-calidad.html">Control de calidad</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer__heading">Idiomas</p>
+          <ul>
+            <li><a href="../index.html">Español</a></li>
+            <li><a href="../en/index.html">English</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer__heading">Documento</p>
+          <p class="footer__small">Universidad de las Ciencias Informáticas · 2026</p>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <span>© Instituto de Investigación del Tabaco · 2026</span>
+        <span>Sitio informativo · no transaccional</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>
