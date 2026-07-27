@@ -137,6 +137,20 @@ Para agregar más procesos o reordenar:
 2. Mantené los mismos `meta-chip` y los enlaces cruzados (`next-step`) entre páginas.
 3. Si agregás uno nuevo, actualizá los enlaces de `next-step` del proceso anterior.
 
+## i18n — mantener simetría ES/EN
+
+Cada página de proceso en español tiene su equivalente en inglés. La relación de slugs está definida en `SPEC.md §3` y en `scripts/check-i18n-symmetry.py`.
+
+Para verificar que todos los pares están simétricos:
+
+```bash
+python scripts/check-i18n-symmetry.py
+```
+
+Esto chequea: (1) cada archivo ES tiene su par EN, (2) ambos tienen las mismas secciones (simple, detalle, datos), (3) ambos tienen meta description, (4) los hreflang son recíprocos.
+
+Si agregás un proceso nuevo, creá ambos archivos (`procesos/<slug>.html` y `procesos/en/<slug>.html`) y corré el checker para confirmar simetría. Si el slug no existe en el mapping, agregalo también en `scripts/check-i18n-symmetry.py`.
+
 ## Paleta y tipografía
 
 | Variable | Valor | Uso |
