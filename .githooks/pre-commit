@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# .githooks/pre-commit — SDD gate. Version-controlled (v2.4+) so cloning
+# the repo brings the hook along; run `bash scripts/install-hooks.sh`
+# (or scripts\install-hooks.bat on Windows) ONCE per clone to wire it
+# up via `git config core.hooksPath .githooks`.
+#
+# Behavior unchanged from the legacy .git/hooks/pre-commit installation:
+# fast lane (≤30 s) for trivial commits, full lane for any HTML / CSS /
+# JS / sitemap / JSON change. Drift caught at commit time, not in CI.
+#
+# `--no-verify` is the WIP-only bypass. See SPEC.md §15.3.1 item 16,
+# docs/PRE-COMMIT.md §6 (install + uninstall + migration snippets).
+
+set -e
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+# 1. Stage contents about to be committed (added/copied/modified/renamed,
+#    drops pairs so deletes don't pollute the count).
+STAGED="$(git diff --cached --name-only --diff-filter=ACMR)"
+
+# Nothing staged → nothing to verify (defensive; git itself wouldn't call us).
+if [ -z "$STAGED" ]; then
+    exit 0
+fi
+
+# 2. Classify staged paths. Trivial whitelist (case-sensitive per
+#    grep -E default; project standardizes on lowercase directory names):
+#    docs/      — operator-facing docs (RUNTIME-PROOFS, etc.)
+#    scripts/   — the gate tooling itself
+#    SPEC.md    — the specification of record
+#    README.md  — project readme
+#    .gitignore — repo plumbing
+# Anything else (*.html, *.css, *.js, sitemap.xml, package.json, ...) is
+# treated as a content edit and demands the full gate.
+TRIVIAL_RE='^(docs/.+|scripts/.+|SPEC\.md|README\.md|\.gitignore)$'
+
+# grep -v inverts: it selects lines NOT matching TRIVIAL_RE. -q exits 0 if
+# any such line was selected (= at least one content edit was staged).
+if printf '%s\n' "$STAGED" | grep -v -E -q "$TRIVIAL_RE"; then
+    SCOPE="full"
+    TIMEOUT_ARGS=""
+else
+    SCOPE="fast"
+    TIMEOUT_ARGS="--timeout=30"
+fi
+
+STAGED_COUNT="$(printf '%s\n' "$STAGED" | wc -l | tr -d ' ')"
+echo "[pre-commit] staged ${STAGED_COUNT} file(s); scope=${SCOPE}"
+if [ "$SCOPE" = "fast" ]; then
+    echo "[pre-commit] fast lane active (skip group #14 runtime proofs, 30 s cap)"
+fi
+
+# 3. Run gate. --quiet so we only see the one-line summary on PASS.
+python scripts/check-spec.py --scope="$SCOPE" --quiet $TIMEOUT_ARGS
+RC=$?
+
+if [ "$RC" -ne 0 ]; then
+    echo ""
+    echo "[pre-commit] gate FAILed (exit ${RC})."
+    if [ "$RC" -eq 124 ]; then
+        echo "[pre-commit] fast lane exceeded 30 s. Split your commit into"
+        echo "             smaller content commits, or move the heavy work"
+        echo "             outside docs/scripts/. To bypass for WIP ONLY:"
+        echo "                 git commit --no-verify"
+    else
+        echo "[pre-commit] resolve drift fenced in [FAIL] lines above, then"
+        echo "             recommit. For WIP bypass use:"
+        echo "                 git commit --no-verify"
+    fi
+    exit "$RC"
+fi
+
+exit 0

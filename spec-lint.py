@@ -23,10 +23,12 @@ from __future__ import annotations
 
 import argparse
 import glob
+import gzip
 import io
 import json
 import os
 import re
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 from contextlib import contextmanager
@@ -49,6 +51,43 @@ EXPECTED_TOTAL_HTML = 17  # 2 homes + 7 process ES + 7 process EN + 404
 HOMES = ["index.html", "en/index.html"]
 N_HOME_TIMELINE = 7
 N_HOME_ACCENT = 2
+
+# Byte budget targets (§15.3.1 item 15 / group #15). Calibrated against
+# site weight at v2.1: current unc ~215 KB, current gzip ~82 KB. Targets
+# give 15-25% headroom so meta-tag / description / asset growth triggers
+# the gate before publish-time regressions.
+#
+# Note: the per-section caps (HTML, assets) are **advisory** — they
+# identify WHICH dimension is bloating when total trips. The total cap
+# (250 KB unc / 90 KB gz) is the **binding** constraint for merges.
+# Per-section caps are deliberately < total each so the per-section
+# invariant fails first if one dimension is consuming disproportionate
+# of the budget.
+BUDGET_HTML_KB_UNC = 175.0    # current: ~154 KB
+BUDGET_HTML_KB_GZ = 55.0      # current:  ~46 KB
+BUDGET_ASSETS_KB_UNC = 110.0  # current:  ~61 KB
+BUDGET_ASSETS_KB_GZ = 60.0    # current:  ~37 KB
+BUDGET_TOTAL_KB_UNC = 250.0   # current: ~215 KB (user-stated 250 KB target)
+BUDGET_TOTAL_KB_GZ = 90.0     # current:  ~82 KB (user-stated  90 KB target)
+
+# Keys the byte budget gate treats as a precondition for running the
+# per-section (assets-related) invariants. If any of these are missing,
+# the gate fails with a clear message rather than emitting silent zeros.
+EXPECTED_KEY_ASSETS = [
+    "assets/css/styles.css",
+    "assets/js/app.js",
+    "assets/img/favicon.svg",
+    "assets/img/og-image.png",
+]
+
+# Asset extensions considered user-facing bytes. Anything else (build
+# artefacts, hidden files, sourcemaps) is excluded from the budget so
+# it doesn't quietly consume target budget headroom.
+ASSET_EXTENSIONS = (
+    ".css", ".js", ".svg", ".png", ".jpg", ".jpeg",
+    ".webp", ".ico", ".woff", ".woff2", ".ttf", ".otf",
+    ".mp4", ".webm", ".txt", ".json", ".xml",
+)
 
 # ES / EN process-page slug pairing (from SPEC §3)
 PROCESS_PAIRS: dict[str, str] = {
@@ -556,9 +595,306 @@ def check_content_drift() -> None:
         en_only = sorted(set(en_present) - set(es_present))
         es_only = sorted(set(es_present) - set(en_present))
         record(
-            f"{es_slug} pair: ≥1 §4 glossary term shared ES↔EN",
-            len(shared) >= 1,
-            f"shared={shared} EN-only={en_only} ES-only={es_only}",
+        f"{es_slug} pair: ≥1 §4 glossary term shared ES↔EN",
+        len(shared) >= 1,
+        f"shared={shared} EN-only={en_only} ES-only={es_only}",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 14. Runtime proofs — sitemap ↔ server ↔ filesystem
+# ---------------------------------------------------------------------------
+
+def check_runtime_proofs() -> None:
+    """Delegates the runtime probe to scripts/smoke-site.py and reports the
+    result as a single gate invariant. This is what catches drift between
+    sitemap.xml and the actual filesystem when files are renamed, deleted,
+    or referenced only from HTML without the sitemap being updated."""
+    print("\n=== 14. Runtime proofs (sitemap ↔ served ↔ filesystem) ===")
+    script = os.path.join(ROOT, "scripts", "smoke-site.py")
+    try:
+        proc = subprocess.run(
+            [sys.executable, script, "--json"],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired:
+        record(
+            "Runtime proofs: smoke probe completed within 60s",
+            False,
+            "scripts/smoke-site.py timed out",
+        )
+        return
+    except Exception as exc:
+        record("Runtime proofs: smoke probe runnable", False, str(exc))
+        return
+
+    if proc.returncode not in (0, 1):
+        record(
+            "Runtime proofs: sitemap ↔ server ↔ filesystem",
+            False,
+            f"smoke-site.py exit={proc.returncode} stderr={proc.stderr.strip()[:200]}",
+        )
+        return
+
+    try:
+        report = json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        record("Runtime proofs: probe output was valid JSON", False, str(exc))
+        return
+
+    record("Runtime proofs: probe output was valid JSON", True)
+
+    drift = bool(report.get("declared_not_served") or report.get("served_but_unlisted"))
+    record(
+        "Runtime proofs: no drift between sitemap, server and HTML links",
+        not drift,
+        (
+            f"{len(report.get('declared_not_served', []))} broken, "
+            f"{len(report.get('served_but_unlisted', []))} unlinked"
+            if drift else "sitemap ≥ server ≥ filesystem"
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# 15. Byte budget — *> HTML weight + assets weight, unc + gzip
+# ---------------------------------------------------------------------------
+
+def check_byte_budget() -> None:
+    """Group #15: assert aggregate site weight (HTML + assets) stays below
+    pre-declared budgets in both uncompressed and gzip-compressed bytes.
+    Catches silent bloat regressions (extra meta tags, verbose
+    descriptions, image growth) before publish. Each section (HTML,
+    assets) and aggregate emits a separate invariant so the diagnostic
+    points at which dimension is overweight.
+
+    Excludes files under docs/ — that folder is operator-facing
+    documentation, not user-facing bytes. Also filters hidden files
+    (`.DS_Store`, `.gitkeep`, build artefacts) and unknown extensions so
+    they don't quietly consume target budget headroom.
+    """
+    print("\n=== 15. Byte budget (HTML + assets, unc + gzip) ===")
+    html_files = [
+        f for f in all_html()
+        if not to_posix(f).startswith("docs/")
+    ]
+    asset_files = sorted(
+        os.path.join(root, name)
+        for root, _dirs, names in os.walk("assets")
+        for name in names
+        if not name.startswith(".")
+        and os.path.isfile(os.path.join(root, name))
+        and any(name.lower().endswith(ext) for ext in ASSET_EXTENSIONS)
+    )
+
+    # Precondition: key user-facing assets must exist before the per-section
+    # asset invariants are meaningful. Without this guard, a botched
+    # `git checkout assets/` or an accidental `rm -rf assets/img/` would
+    # produce zero-weight asset output and the gate would silence-pass on
+    # bloat that wasn't really absent.
+    missing_key_assets = [k for k in EXPECTED_KEY_ASSETS if not os.path.isfile(k)]
+    if missing_key_assets:
+        record(
+            "Byte budget precondition: key assets present",
+            False,
+            f"missing: {missing_key_assets}",
+        )
+        for inv_name in (
+            "Byte budget: assets uncompressed",
+            "Byte budget: assets gzip",
+            "Byte budget: total uncompressed",
+            "Byte budget: total gzip",
+        ):
+            record(inv_name + " (skipped: keys missing)", False,
+                   "precondition failed")
+    else:
+        record("Byte budget precondition: key assets present", True,
+               f"{len(EXPECTED_KEY_ASSETS)} checked, all present")
+
+    def _unc_bytes(files: list[str]) -> int:
+        return sum(os.path.getsize(f) for f in files)
+
+    def _gz_bytes(files: list[str]) -> int:
+        total = 0
+        for f in files:
+            try:
+                total += len(gzip.compress(open(f, "rb").read()))
+            except OSError:
+                continue
+        return total
+
+    h_unc = _unc_bytes(html_files) / 1024
+    h_gz = _gz_bytes(html_files) / 1024
+    a_unc = _unc_bytes(asset_files) / 1024
+    a_gz = _gz_bytes(asset_files) / 1024
+
+    def _delta(actual: float, limit: float) -> str:
+        diff = actual - limit
+        if diff <= 0:
+            return f"{actual:.1f} KB (limit {limit:.0f}; headroom {abs(diff):.1f} KB)"
+        return f"{actual:.1f} KB EXCEEDS limit {limit:.0f} by {diff:.1f} KB"
+
+    record(
+        f"Byte budget: HTML uncompressed ≤ {BUDGET_HTML_KB_UNC:.0f} KB",
+        h_unc <= BUDGET_HTML_KB_UNC,
+        _delta(h_unc, BUDGET_HTML_KB_UNC),
+    )
+    record(
+        f"Byte budget: HTML gzip ≤ {BUDGET_HTML_KB_GZ:.0f} KB",
+        h_gz <= BUDGET_HTML_KB_GZ,
+        _delta(h_gz, BUDGET_HTML_KB_GZ),
+    )
+    record(
+        f"Byte budget: assets uncompressed ≤ {BUDGET_ASSETS_KB_UNC:.0f} KB",
+        a_unc <= BUDGET_ASSETS_KB_UNC,
+        _delta(a_unc, BUDGET_ASSETS_KB_UNC),
+    )
+    record(
+        f"Byte budget: assets gzip ≤ {BUDGET_ASSETS_KB_GZ:.0f} KB",
+        a_gz <= BUDGET_ASSETS_KB_GZ,
+        _delta(a_gz, BUDGET_ASSETS_KB_GZ),
+    )
+    record(
+        f"Byte budget: total uncompressed ≤ {BUDGET_TOTAL_KB_UNC:.0f} KB",
+        h_unc + a_unc <= BUDGET_TOTAL_KB_UNC,
+        _delta(h_unc + a_unc, BUDGET_TOTAL_KB_UNC),
+    )
+    record(
+        f"Byte budget: total gzip ≤ {BUDGET_TOTAL_KB_GZ:.0f} KB",
+        h_gz + a_gz <= BUDGET_TOTAL_KB_GZ,
+        _delta(h_gz + a_gz, BUDGET_TOTAL_KB_GZ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# 16. HTML markup validate — *.html correctness per page (pure-Python ladder)
+# ---------------------------------------------------------------------------
+
+def check_html_validate() -> None:
+    """Group #16: HTML markup correctness per page.
+
+    Runs `scripts/html-validate.py` as a subprocess (30 s timeout) and parses
+    its JSON output. Each of the 14 catalog entries (13 rules = 9 markup §10
+    + 4 a11y §6, plus 1 `file_missing` sentinel excluded from the per-rule
+    PASS-emission loop because check_page() emits it directly) emits one
+    invariant so a regression points at which constraint is failing.
+    Companion to group #15 (byte budget, which targets SIZE); this one
+    targets STRUCTURE.
+
+    Why not htmlhint / lighthouse-ci:
+    - htmlhint requires Node — conflicts with Python-3.8-only CI runtime
+      established in v2.3. Pure-Python keeps the dependency surface flat.
+    - lighthouse-ci requires headless Chrome (~250 MB) and 2–5 min per page
+      scan vs ~10 ms here. Wall-clock budget would explode past the 5-min
+      `timeout-minutes` of `gate.yml`.
+    """
+    print("\n=== 16. HTML markup validate (17 pages × 14 catalog entries) ===")
+
+    # v2.9: single-source-of-truth rule catalog loaded from
+    # scripts/html-rules.json. No more hardcoded rules list in spec-lint.py.
+    # Precondition invariants: the JSON must exist + be parseable + carry
+    # the $schema_version we expect. These are emitted as gate invariants
+    # so missing/malformed catalog blocks the gate visibly (not silently).
+    rules_json_path = os.path.join(ROOT, "scripts", "html-rules.json")
+    if not os.path.isfile(rules_json_path):
+        record(
+            "HTML validate: rule catalog exists",
+            False,
+            f"missing: {rules_json_path}",
+        )
+        return
+    try:
+        rules_catalog_doc = json.load(open(rules_json_path))
+    except json.JSONDecodeError as exc:
+        record(
+            "HTML validate: rule catalog is valid JSON",
+            False,
+            f"json error: {exc}",
+        )
+        return
+    record(
+        "HTML validate: rule catalog is valid JSON",
+        True,
+        f"schema_version={rules_catalog_doc.get('$schema_version', '?')}",
+    )
+
+    schema_version = rules_catalog_doc.get("$schema_version", 0)
+    if not isinstance(schema_version, int) or schema_version < 1:
+        record(
+            "HTML validate: rule catalog $schema_version >= 1",
+            False,
+            f"got: {schema_version}",
+        )
+        return
+    record("HTML validate: rule catalog $schema_version >= 1", True)
+
+    rules_catalog = rules_catalog_doc.get("rules", [])
+    if not rules_catalog:
+        record(
+            "HTML validate: rule catalog has at least 1 rule",
+            False,
+            "rules array empty",
+        )
+        return
+    record(
+        f"HTML validate: rule catalog has {len(rules_catalog)} rules",
+        True,
+        f"expected 14 entries (13 rules + 1 file_missing sentinel) per v2.10 generic engine",
+    )
+
+    try:
+        proc = subprocess.run(
+            [sys.executable, "scripts/html-validate.py"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (subprocess.TimeoutExpired, FileNotFoundError) as exc:
+        record(
+            "HTML validate: probe completed in under 30 s",
+            False,
+            f"exception={type(exc).__name__}: {exc}",
+        )
+        return
+
+    # Probe emitted parseable JSON.
+    try:
+        data = json.loads(proc.stdout)
+        record(
+            "HTML validate: probe output was valid JSON",
+            True,
+            f"scanned={data.get('files_scanned', 0)}/17 files, "
+            f"violations={data.get('files_with_violations', 0)} pages",
+        )
+    except json.JSONDecodeError:
+        record(
+            "HTML validate: probe output was valid JSON",
+            False,
+            f"stdout[:120]={proc.stdout[:120]!r}",
+        )
+        return
+
+    files_scanned = data.get("files_scanned", 0)
+    files_missing = data.get("files_missing", 0)
+    record(
+        "HTML validate: all 17 pages present on disk",
+        files_scanned == 17 and files_missing == 0,
+        f"scanned={files_scanned}, missing={files_missing}",
+    )
+
+    rule_totals = data.get("rule_totals", {})
+    for rule in rules_catalog:
+        key = rule["key"]
+        label = rule["label"]
+        n = rule_totals.get(key, 0)
+        record(
+            f"HTML validate: {label}",
+            n == 0,
+            f"pages_with_issue={n}",
         )
 
 
@@ -596,27 +932,59 @@ ALL_CHECKS = (
     check_app_js,
     check_assets,
     check_content_drift,
+    check_runtime_proofs,
+    check_byte_budget,
+    check_html_validate,
 )
+
+# Group index in ALL_CHECKS (0-based; "g1"=index 0 ... "g15"=index 14).
+# Used by --scope to skip costly groups when the caller knows they don't apply.
+# Group#14 (runtime proofs) is the slow one — boots an HTTP server + makes 16
+# urllib round-trips just to assert sitemap≤>server≤>filesystem drift. Perfect
+# candidate to omit from pre-commit fast lanes that only touch docs/scripts.
+SCOPE_GROUPS: dict[str, set[int]] = {
+    # Default — every check runs (call from CI, manual, --json from a pipe).
+    "full": set(),
+    # Hook fast lane — skip the runtime probe. Document changes cannot drift
+    # the runtime topology; if the site is healthy when the commit starts, it
+    # is still healthy when commit ends. Group#15 (byte budget) IS kept because
+    # it is sub-second and catches egregiously oversized assets fast.
+    "fast": {13},  # skip check_runtime_proofs (group #14)
+}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--json", action="store_true",
                         help="emit machine-readable JSON instead of table")
+    parser.add_argument(
+        "--scope", default="full", choices=("fast", "full"),
+        help=("gate scope: 'full' (default — run all 15 groups) | "
+              "'fast' (skip group #14 runtime proofs; sub-30s pre-commit lane)"),
+    )
     args = parser.parse_args()
 
     os.chdir(ROOT)
 
-    # Run all checks. In --json mode, route their chatty per-check output
+    skipped_indices = SCOPE_GROUPS.get(args.scope, set())
+    effective_checks = tuple(
+        fn for idx, fn in enumerate(ALL_CHECKS) if idx not in skipped_indices
+    )
+    # Always tell the caller which groups were skipped, even in --quiet mode
+    # via the JSON shape — hooks and dashboards need it for their own logs.
+    skipped_names = [fn.__name__ for fn in
+                     (ALL_CHECKS[i] for i in sorted(skipped_indices))]
+
+    # Run effective checks. In --json mode, route their chatty per-check output
     # to a discardable buffer so ONLY the JSON document reaches the real
     # stdout — wire consumers (CI, hooks, dashboards) can then pipe or
     # parse without dealing with tables, OK/FAIL rows, or group banners.
     if args.json:
         with _silenced_stdout():
-            for fn in ALL_CHECKS:
+            for fn in effective_checks:
                 fn()
     else:
-        for fn in ALL_CHECKS:
+        for fn in effective_checks:
             fn()
 
     n_pass = sum(1 for _, status, _ in results if status == "PASS")
@@ -625,6 +993,8 @@ def main() -> int:
     if args.json:
         print(json.dumps(
             {
+                "scope": args.scope,
+                "skipped": skipped_names,
                 "pass": n_pass,
                 "fail": n_fail,
                 "results": [

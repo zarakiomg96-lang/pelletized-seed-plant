@@ -1,0 +1,45 @@
+# .github/dependabot.yml — Monthly supply-chain hygiene for the SDD gate.
+#
+# Pins in .github/workflows/gate.yml are SHA-anchored (commit SHA +
+# version comment for human-readable auditability). Dependabot's role
+# here is to nudge pin updates monthly so a future upstream advisory
+# (or routine patch) lands as a single batched PR instead of sitting
+# behind manual tracking. Major version updates are deliberately NOT
+# batched — they surface as separate PRs because they may change
+# default behavior (Python version support matrix, checkout semantics,
+# action.yml inputs, etc.) and need explicit evaluation.
+#
+# IMPORTANT: auto-merge is deliberately LEFT OFF. The CI gate depends
+# on these actions; a broken bump would break the gate that catches
+# its own drift, and the result would manifest as a silent green CI
+# that no longer validates anything. Manual review on the PR is the
+# contract — the workflow's gate.yml bump is the artifact, never its
+# own validation.
+
+version: 2
+
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "1"
+      time: "04:00"
+      timezone: "UTC"
+    groups:
+      actions-minor-and-patch:
+        patterns:
+          - "actions/*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "security"
+    commit-message:
+      prefix: "ci"
+      prefix-development: "ci(draft)"
+      include-scope: true
+    # open-pull-requests-limit: 5 (default; preserve)
+    # rebase-strategy: auto (default; preserve)
+    # No `target-branch` — Dependabot PRs land against `main` directly.

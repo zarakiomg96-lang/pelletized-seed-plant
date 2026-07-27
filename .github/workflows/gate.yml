@@ -1,0 +1,271 @@
+# .github/workflows/gate.yml — SDD gate on PR + push to main.
+#
+# Jobs (declarative order matches runtime):
+#   1. gate (always)             — runs spec-lint.py full scope.
+#   2. preview-deploy (PR only)  — per-PR Pages deployment via deployment_path.
+#   3. lighthouse (PR only, after preview-deploy) — perf/a11y budget against live preview URL.
+#
+# Run the same gate the pre-commit hook runs locally, but ALWAYS with
+# --scope=full because CI has time-generous budget and tolerates no
+# drift — even drift a developer bypassed with `git commit --no-verify`.
+#
+# Wall-clock budget: gate runs ~60 s on a clean state, ~120 s worst-case
+# at byte-budget under load (BUDGET_*_KB_* in spec-lint.py). The
+# 5-minute timeout has ~3x headroom; bump both this file + §15.3.1 item
+# 17 if any step starts scraping that ceiling. Lighthouse step reserves
+# 10 min for the per-page Chrome-driven audits.
+#
+# Job is name-pinned ("spec-lint full scope") so branch-protection
+# rules can match by name. The same contract is asserted in step 4
+# below — contract surface, not internal detail. If the assertion
+# fails, the GitHub Actions log surfaces a loud ::error::Contract
+# violation; without it, a rename silently breaks the branch-
+# protection rule.
+#
+# Path coverage is gated, not full-history: the `paths:` filter MUST
+# mirror the gate's input surface (HTML + CSS + JS + sitemap + robots +
+# SPEC + assets + scripts + spec-lint + the workflow itself +
+# .lighthouserc.json). If a new gate check is added that reads a new
+# surface, extend `paths:` in the same v. See SPEC.md §15.3.1 item 17
+# + §13 v2.3.1 for the contract; for the local hook side see
+# `docs/PRE-COMMIT.md`.
+#
+# Actions are SHA-pinned (not tag-pinned) for supply-chain hardening:
+# `actions/checkout@<sha> # v4.4.0`. Tag-pinning trusts upstream to
+# never reassign `v4.x.y` to a malicious commit (rare but documented
+# threat per OSSF Scorecard). SHA pins 100% the code we run; the
+# trailing comment provides human-readable auditability. Dependabot
+# opens a monthly PR with bumped pins via `.github/dependabot.yml`;
+# review manually (NO auto-merge — the workflow itself feeds CI and
+# a broken bump breaks the gate that checks itself).
+
+name: SDD Gate
+
+on:
+  pull_request:
+    paths:
+      - '*.html'
+      - '*.css'
+      - '*.js'
+      - 'sitemap.xml'
+      - 'robots.txt'
+      - 'SPEC.md'
+      - 'assets/**'
+      - 'scripts/check-spec.py'
+      - 'scripts/install-hooks.sh'
+      - 'scripts/install-hooks.bat'
+      - 'spec-lint.py'
+      - '.githooks/**'
+      - '.github/workflows/gate.yml'
+      - '.lighthouserc.json'
+  push:
+    branches: [main]
+    paths:
+      - '*.html'
+      - '*.css'
+      - '*.js'
+      - 'sitemap.xml'
+      - 'robots.txt'
+      - 'SPEC.md'
+      - 'assets/**'
+      - 'scripts/check-spec.py'
+      - 'scripts/install-hooks.sh'
+      - 'scripts/install-hooks.bat'
+      - 'spec-lint.py'
+      - '.githooks/**'
+      - '.github/workflows/gate.yml'
+      - '.lighthouserc.json'
+  workflow_dispatch:
+
+jobs:
+  gate:
+    name: spec-lint full scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d59604169c99144365775c7423927d7f7e9140 # v4.4.0
+
+      - name: Setup Python
+        uses: actions/setup-python@a26af6942ad3ed426615b191c9533fbd4802c0ca # v5.6.0
+        with:
+          python-version: '3.8'
+
+      - name: Run SDD gate (full scope)
+        run: python scripts/check-spec.py --scope=full --quiet
+
+      - name: Assert job-name contract (branch-protection pins "spec-lint full scope")
+        if: always()
+        run: |
+          if [ "$GITHUB_JOB" != "spec-lint full scope" ]; then
+            echo "::error::Contract violation: \$GITHUB_JOB='$GITHUB_JOB' != 'spec-lint full scope'. Branch protection will silently stop matching this workflow." >&2
+            echo "::error::Revert the rename or update the branch-protection rule in repo settings." >&2
+            exit 1
+          fi
+
+  preview-deploy:
+    name: preview per PR (Pages deployment_path)
+    needs: gate
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      pull-requests: write
+    environment:
+      name: github-pages-preview
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      preview-url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d59604169c99144365775c7423927d7f7e9140 # v4.4.0
+
+      # Subpath-safe rewrite: SPEC §3 uses absolute paths (`/assets/...`).
+      # When deployed under `deployment_path: pr-N/`, the browser resolves
+      # absolute paths against origin (`<owner>.github.io/assets/...`),
+      # NOT against the deployment subpath. This sed step rewrites at
+      # upload time: `href="/X"` → `href="./X"` (same for `src=`) inside
+      # every *.html in the artifact. Source tree and production deploy
+      # remain unchanged — only the upload-root artifact is subpath-safe.
+      # >>> DO NOT REMOVE THIS STEP. <<<
+      # Same rationale as the `deploy` job's rewrite. Without it,
+      # absolute asset paths would 404 against the PR subpath.
+      - name: 'DO NOT REMOVE — Rewrite absolute href/src to relative (subpath-safe) (preview)'
+        run: |
+          find . -type f -name '*.html' -not -path './.git/*' -exec sed -i 's|href="/|href="./|g; s|src="/|src="./|g' {} +
+
+      - name: Setup Pages
+        uses: actions/configure-pages@45bfe01d784fd09908492efd4b9b940e4ab7be17 # v6.0.0
+
+      - name: Upload Pages artifact (full repo tree, no build step)
+        uses: actions/upload-pages-artifact@fc324d3101fd69ba1d80362143093952f4c0ee10 # v5.0.0
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages (per-PR deployment_path)
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8f45a706346b0ed2347209e984fe75aa7a8 # v5.0.0
+        with:
+          deployment_path: pr-${{ github.event.pull_request.number }}
+
+      - name: Comment preview URL on PR (sticky / idempotent across pushes)
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: preview-url            message: |
+              🔗 **Preview URL**: ${{ steps.deployment.outputs.page_url }}
+
+              _Re-deploys on every push to this PR. Lighthouse budget audit runs against this URL._
+
+  # Production deploy: runs on push to main OR via workflow_dispatch
+  # (manual re-run from the Actions tab), after gate passes.
+  # Mirrors preview-deploy (sha-pinned, subpath-safe relative-rewrite,
+  # actions/deploy-pages@v4) but: (1) does NOT fire on PRs —
+  # preview-deploy handles those; (2) targets the `github-pages`
+  # production environment (preview uses `github-pages-preview`);
+  # (3) NO `deployment_path` so the artifact lands at the canonical
+  # project URL `/<repo>/`, not under `/pr-N/`. Both deploy paths share
+  # the same `gate` job as pre-flight; drift can't reach `/<repo>/`.
+  # See SPEC.md §13 v3.0 + §15.3.1 item 17.
+  #
+  # OPERATIONAL PREREQUISITE: the `github-pages` environment MUST exist
+  # in repo Settings → Environments before this job can run. Without
+  # it, the workflow fails with "Environment not found". Setup (one-time):
+  #   Settings → Environments → New environment → name `github-pages`
+  #   → Deployment branches and tags → Allowed branches → only `main`.
+  deploy:
+    name: deploy to Pages (main)
+    needs: gate
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      # Production deploys all target root /<repo>/. Without this
+      # block, two pushes in quick succession can collide and leave
+      # Pages serving a half-updated URL mid-window. `cancel-in-progress:
+      # false` queues them so the second waits for the first to settle
+      # (Pages deploys are ~30 s each, well under the 5-min timeout).
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d59604169c99144365775c7423927d7f7e9140 # v4.4.0
+
+      # Subpath-safe rewrite for project pages (same rationale as PR
+      # preview): SPEC §3 uses absolute paths (`/assets/...`) which
+      # resolve against origin (`<owner>.github.io/assets/...`),
+      # NOT against the project subpath (`<owner>.github.io/<repo>/`).
+      # sed `href="/X"` → `href="./X"` so production serves correctly
+      # at the canonical root URL. Same step ran in preview-deploy
+      # but at upload time only; the source tree is unchanged.
+      # >>> DO NOT REMOVE THIS STEP. <<<
+      # Browsers resolve `/assets/...` against origin
+      # (`<owner>.github.io/assets/...`), NOT against the project
+      # subpath (`<owner>.github.io/<repo>/assets/...`). Without the
+      # rewrite, every absolute asset path on production returns 404.
+      # The rewrite mutates the *upload-time artifact* only; the
+      # source tree stays absolute (file:// and dev-server friendly).
+      - name: 'DO NOT REMOVE — Rewrite absolute href/src to relative (subpath-safe) (main)'
+        run: |
+          find . -type f -name '*.html' -not -path './.git/*' -exec sed -i 's|href="/|href="./|g; s|src="/|src="./|g' {} +
+
+      - name: Setup Pages
+        uses: actions/configure-pages@45bfe01d784fd09908492efd4b9b940e4ab7be17 # v6.0.0
+
+      - name: Upload Pages artifact (full repo tree, no build step)
+        uses: actions/upload-pages-artifact@fc324d3101fd69ba2d80362143093952f4c0ee10 # v5.0.0
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages (root /<repo>/)
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8f45a706346b0ed2347209e984fe75aa7a8 # v5.0.0
+        # NOTE: no `deployment_path` → artifact lands at the canonical
+        # project URL. Preview deploys use deployment_path: pr-N → /pr-N/.
+
+  lighthouse:
+    name: lighthouse budget (preview URL)
+    needs: preview-deploy
+    if: needs.preview-deploy.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d59604169c99144365775c7423927d7f7e9140 # v4.4.0
+
+      # Lighthouse budget audit (v2.8.1: URL via action input, not env-var-in-JSON).
+      # Runs against the live preview URL produced by the preview-deploy
+      # job. The action reads .lighthouserc.json (in the same repo) for
+      # assertion thresholds; the live URL is passed via the action's
+      # `with.urls` input (treosh action translates this to a
+      # `lhci autorun --url=…` CLI arg, overriding the empty
+      # `collect.url: []` in the JSON). **Why not $LH_URL in JSON**: lhci
+      # does NOT do shell-var expansion inside JSON config files; the
+      # literal string "$LH_URL" would be passed to LH as the URL and fail.
+      # **Settings**: a single desktop run (no simulated throttling — perf
+      # ceilings measured against the GitHub-hosted CI machine, not a
+      # user's CPU). **Assertions**: hard-error (LCP / CLS / a11y) flip the
+      # workflow red on miss; warn (perf / best-practices / seo) emit a
+      # soft signal but don't block merge. **Reports**: `uploadArtifacts:
+      # true` saves the LH report as a GitHub Actions artifact AND
+      # `upload.target: temporary-public-storage` in the JSON publishes a
+      # 7-day anonymous public URL for sharing.
+      - name: Run Lighthouse budget (perf + a11y + best-practices + seo)
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: ${{ needs.preview-deploy.outputs.preview-url }}
+          configPath: .lighthouserc.json
+          uploadArtifacts: true
