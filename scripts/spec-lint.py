@@ -795,11 +795,11 @@ def check_html_validate() -> None:
     print("\n=== 16. HTML markup validate (17 pages × 14 catalog entries) ===")
 
     # v2.9: single-source-of-truth rule catalog loaded from
-    # scripts/html-rules.json. No more hardcoded rules list in spec-lint.py.
+    # scripts/data/html-rules.json. No more hardcoded rules list in spec-lint.py.
     # Precondition invariants: the JSON must exist + be parseable + carry
     # the $schema_version we expect. These are emitted as gate invariants
     # so missing/malformed catalog blocks the gate visibly (not silently).
-    rules_json_path = os.path.join(ROOT, "scripts", "html-rules.json")
+    rules_json_path = os.path.join(ROOT, "scripts", "data", "html-rules.json")
     if not os.path.isfile(rules_json_path):
         record(
             "HTML validate: rule catalog exists",

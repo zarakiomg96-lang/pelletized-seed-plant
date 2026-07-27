@@ -2,7 +2,7 @@
 """
 scripts/html-validate.py — Group #16 input: pure-Python HTML markup validator.
 
-v2.10: generic JSON-driven rule engine. The catalog (scripts/html-rules.json)
+v2.10: generic JSON-driven rule engine. The catalog (scripts/data/html-rules.json)
 is now the ONLY source of rule metadata + logic specification. Adding a rule
 of an existing shape = 1 edit to the catalog. Adding a rule of a NEW shape
 = 1 catalog entry + 1 dispatch branch in _dispatch_rule().
@@ -87,14 +87,14 @@ ALL_PAGES: List[str] = sorted(
 # v2.10: Generic JSON-driven rule engine.
 # =============================================================================
 #
-# Architecture: catalog (scripts/html-rules.json) is the ONLY source of rule
+# Architecture: catalog (scripts/data/html-rules.json) is the ONLY source of rule
 # metadata + logic specification. Adding a rule of an existing shape = 1 edit
 # to the catalog. Adding a rule of a NEW shape = 1 catalog entry + 1 dispatch
 # branch in _dispatch_rule(). Named sets (currently ARIA_ROLES) live in the
 # top-level `sets` registry and are referenced by `allowed_set_ref`.
 
 RULES_JSON_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), 'html-rules.json'
+    os.path.dirname(os.path.abspath(__file__)), 'data', 'html-rules.json'
 )
 CATALOG_DOC: dict = json.load(open(RULES_JSON_PATH, encoding='utf-8'))
 RULES_CATALOG: List[dict] = CATALOG_DOC['rules']

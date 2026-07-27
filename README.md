@@ -25,11 +25,18 @@ Construido como sitio estático (HTML + CSS + JS) — sin build step, sin depend
 │   ├── js/app.js
 │   ├── img/                    SVG decorativos (logo, favicon, og-image.png)
 │   └── video/                  Carpeta para tu video institucional
-├── scripts/                    Wrappers del gate (SDD)
+├── scripts/                    Toolchain de validación (SDD)
+│   ├── spec-lint.py            Gate ejecutable de §15.3.1
 │   ├── check-spec.py           Entrada portable (Python)
-│   ├── check-spec.sh           Shim POSIX
-│   └── check-spec.bat          Shim Windows
-├── spec-lint.py                Gate ejecutable de §15.3.1
+│   ├── html-validate.py        Validador de marcado HTML
+│   ├── smoke-site.py           Probe de runtime (sitemap ↔ server)
+│   ├── check-i18n-symmetry.py  Verificador de simetría ES/EN
+│   ├── data/
+│   │   └── html-rules.json     Catálogo de reglas (14 entries)
+│   ├── _archive/               Scripts one-off (históricos)
+│   ├── check-spec.{sh,bat}     Shims POSIX/Windows
+│   ├── smoke-site.{sh,bat}     Shims POSIX/Windows
+│   └── install-hooks.{sh,bat}  Instaladores de hooks
 ├── SPEC.md                     Contrato Specification-Driven
 └── README.md                   Esta guía
 ```
