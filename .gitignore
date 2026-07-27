@@ -18,9 +18,28 @@ Thumbs.db
 
 # IDEs
 .vscode/
+
+# Python (validation tooling builds these; never commit)
+__pycache__/
+*.pyc
+*.pyo
+
+# Validation-tooling iteration scratch (one-off scripts + JSON dumps;
+# see scripts/check-spec.py --help for the canonical toolchain)
+_gate.json
+_insert_*.py
+_apply_*.py
+_frebuff-validation/
+.frebuff-validation/
+.atl/
+.lighthouserc.json
 .idea/
 *.swp
 *.swo
+
+# Documentos fuente (tesis, etc.) — no forman parte del sitio
+*.docx
+*.pdf
 
 # Python (gate + scripts)
 __pycache__/
