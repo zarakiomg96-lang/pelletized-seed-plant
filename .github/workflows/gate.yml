@@ -1,7 +1,7 @@
 # .github/workflows/gate.yml — SDD gate on PR + push to main.
 #
 # Jobs (declarative order matches runtime):
-#   1. gate (always)             — runs spec-lint.py full scope.
+#   1. gate (always)             — runs scripts/spec-lint.py full scope.
 #   2. preview-deploy (PR only)  — per-PR Pages deployment via deployment_path.
 #   3. lighthouse (PR only, after preview-deploy) — perf/a11y budget against live preview URL.
 #
@@ -54,7 +54,7 @@ on:
       - 'scripts/check-spec.py'
       - 'scripts/install-hooks.sh'
       - 'scripts/install-hooks.bat'
-      - 'spec-lint.py'
+      - 'scripts/spec-lint.py'
       - '.githooks/**'
       - '.github/workflows/gate.yml'
       - '.lighthouserc.json'
@@ -71,7 +71,7 @@ on:
       - 'scripts/check-spec.py'
       - 'scripts/install-hooks.sh'
       - 'scripts/install-hooks.bat'
-      - 'spec-lint.py'
+      - 'scripts/spec-lint.py'
       - '.githooks/**'
       - '.github/workflows/gate.yml'
       - '.lighthouserc.json'

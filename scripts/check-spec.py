@@ -11,7 +11,7 @@ want a human-friendly wrapper:
     python scripts/check-spec.py --scope=fast     # skip runtime proofs
     python scripts/check-spec.py --timeout=30     # hard cap on subprocess
 
-The script delegates to ../spec-lint.py and propagates the exit code, so it
+The script delegates to ./spec-lint.py and propagates the exit code, so it
 is safe to wire into any workflow that runs on file change or before commit.
 
 Works on Windows / macOS / Linux with the system Python (>= 3.8).
@@ -32,7 +32,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-SPEC_LINT = os.path.join(ROOT, "spec-lint.py")
+SPEC_LINT = os.path.join(HERE, "spec-lint.py")
 
 
 def _run(args: list[str], capture: bool, timeout: float | None
@@ -149,7 +149,7 @@ def main() -> int:
         print("[check-spec] gate ROTO. Próximos pasos:")
         print("   1. Releer las líneas [FAIL] arriba.")
         print("   2. Editar HTML/CSS/JS o la spec según corresponda.")
-        print("   3. Re-correr `python spec-lint.py` hasta exit 0.")
+        print("   3. Re-correr `python scripts/spec-lint.py` hasta exit 0.")
         print("   4. Anotar el bug nuevo en SPEC.md §14 antes de mergear.")
     return rc
 

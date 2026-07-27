@@ -182,7 +182,7 @@ def record(name: str, ok: bool, detail: str = "") -> None:
 # Locator
 # ---------------------------------------------------------------------------
 
-ROOT = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.getcwd()
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) if "__file__" in globals() else os.getcwd()
 
 
 def to_posix(p: str) -> str:

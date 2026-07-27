@@ -41,6 +41,9 @@ _frebuff-validation/
 *.docx
 *.pdf
 
+# One-off / archive helpers (move here instead of root)
+scripts/_archive/
+
 # Python (gate + scripts)
 __pycache__/
 *.pyc

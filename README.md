@@ -68,14 +68,14 @@ npx --yes serve -l 4321 .
 
 ## Cómo correr el gate (SDD)
 
-El proyecto usa **Specification-Driven Development** (ver `SPEC.md` §10 y §15.3.1). El gate ejecutable vive en `spec-lint.py` y aplica los 13 grupos de checks sobre el código + la spec. Cualquier edit de código debe pasar el gate antes de mergear.
+El proyecto usa **Specification-Driven Development** (ver `SPEC.md` §10 y §15.3.1). El gate ejecutable vive en `scripts/spec-lint.py` y aplica los 13 grupos de checks sobre el código + la spec. Cualquier edit de código debe pasar el gate antes de mergear.
 
 Formas equivalentes de invocarlo:
 
 ```bash
-# Forma directa (raíz del proyecto)
-python spec-lint.py
-python spec-lint.py --json     # salida máquina-leible
+# Forma directa (vía scripts/)
+python scripts/spec-lint.py
+python scripts/spec-lint.py --json     # salida máquina-leible
 
 # Wrapper portable (recomendado para CI, hooks, IDE)
 python scripts/check-spec.py            # tabla humana + guía de FAIL
