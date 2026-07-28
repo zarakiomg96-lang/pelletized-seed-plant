@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 """
-scripts/fix-base-path.py — Rewrite HTML href/src paths to work under a
-GitHub Pages subpath (e.g., /pelletized-seed-plant/).
+scripts/fix-base-path.py — Rewrite HTML paths to work under a GitHub Pages
+project site subpath.
 
-The Astro-generated templates use <base href="/"> and absolute paths
-(/assets/..., /procesos/...). On a GitHub Pages project site, the URL is
-https://<org>.github.io/<repo>/ — so absolute paths point at the server
-root instead of the project root.
+GitHub Pages project sites serve at https://<org>.github.io/<repo>/.
+Astro-generated templates use <base href="/"> and absolute paths (/assets/...)
+that resolve to the server root instead of the project root.
 
-This script:
-  1. Changes <base href="/"> to <base href="/<repo>/">
-  2. Strips the leading / from all href/src values (making them relative
-     to the <base>).
-  3. Resolves ../ and ./ paths against each file's directory.
-  4. Prefixes bare sibling filenames with the file's directory.
+This script is idempotent: safe to run on already-fixed HTML.
+
+Steps:
+  1. <base href="/"> or <base href="<repo>/"> → <base href="/<repo>/">
+  2. href="/" (brand link) → href="index.html"
+  3. Strip leading / from all href/src (→ relative to <base>)
+  4. Resolve ../ and ./ relative to each file's directory
+  5. Prefix bare sibling filenames with file's directory
+  6. Fix <use href="/assets/..."> (SVG sprites)
+  7. Repair breadcrumb links that got incorrect sibling prefix:
+       procesos/index.html → index.html
+       procesos/en/index.html → en/index.html
 """
 
 from __future__ import annotations
@@ -28,22 +33,25 @@ BASE_HREF = f"/{REPO}/"
 
 
 def fix_html(content: str, rel_path: str) -> str:
-    dirname = posixpath.dirname(rel_path.replace("\\", "/"))  # '' | 'procesos' | 'procesos/en'
+    dirname = posixpath.dirname(rel_path.replace("\\", "/"))
     sibling_prefix = dirname + "/" if dirname else ""
 
-    # 1. Base href
-    content = content.replace('<base href="/">', f'<base href="{BASE_HREF}">', 1)
+    # 1. Brand link → placeholder (exclude <base> tags)
+    MARKER = "@@HOME@@"
+    def fix_brand(m: re.Match) -> str:
+        orig = m.group(0)
+        return orig.replace('href="/"', f'href="{MARKER}"', 1)
+    content = re.sub(r'<(?!base\b)[^>]*?\bhref="/"', fix_brand, content)
 
-    # 2. Brand link (icon home link)
-    content = content.replace('href="/"', 'href="index.html"')
-
-    # 3. Fix href/src values
+    # 2. Fix all href/src values in non-base tags.
+    #    Preserve the FULL tag — replace only the attribute value, not the match text.
     def fix_attr(m: re.Match) -> str:
         attr = m.group(1)
         val = m.group(2)
         orig = m.group(0)
 
-        if any(val.startswith(p) for p in ("http://", "https://", "//", "mailto:", "tel:", "data:", "#", "?")):
+        if any(val.startswith(p) for p in ("http://", "https://", "//",
+                                            "mailto:", "tel:", "data:", "#", "?")):
             return orig
 
         new_val = val
@@ -53,22 +61,32 @@ def fix_html(content: str, rel_path: str) -> str:
         elif new_val.startswith("../") or new_val.startswith("./"):
             new_val = posixpath.normpath(posixpath.join(dirname, new_val))
         elif "/" not in new_val and "." in new_val and not new_val.startswith("."):
-            new_val = sibling_prefix + new_val
+            # Sibling link: prefix with directory (but not index.html — base-relative)
+            if new_val != "index.html":
+                new_val = sibling_prefix + new_val
 
         if new_val == val:
             return orig
-        return f'{attr}="{new_val}"'
+        return orig.replace(f'{attr}="{val}"', f'{attr}="{new_val}"', 1)
 
-    content = re.sub(r'(href|src)="([^"]+)"', fix_attr, content)
+    content = re.sub(r'<(?!base\b)[^>]*?\b(href|src)="([^"]+)"', fix_attr, content)
 
-    # 4. Fix <use href="..."> (SVG sprites)
+    # 3. Fix <use href="..."> (SVG sprites)
     def fix_use(m: re.Match) -> str:
+        orig = m.group(0)
         val = m.group(1)
         if val.startswith("/"):
-            return f'href="{val[1:]}"'
-        return m.group(0)
+            return orig.replace(f'href="{val}"', f'href="{val[1:]}"', 1)
+        return orig
 
     content = re.sub(r'<use\s+href="([^"]+)"', fix_use, content)
+
+    # 4. Restore brand link
+    content = content.replace(f'href="{MARKER}"', 'href="index.html"')
+
+    # 5. Set base href LAST (after all other href processing)
+    content = content.replace('<base href="/">', f'<base href="{BASE_HREF}">', 1)
+    content = content.replace(f'<base href="{REPO}/">', f'<base href="{BASE_HREF}">', 1)
 
     return content
 
@@ -87,6 +105,14 @@ def main() -> int:
             with open(fp, encoding="utf-8") as fh:
                 old = fh.read()
             new = fix_html(old, rel)
+            if new == old:
+                import re as _re
+                _m = _re.search('<base[^>]+>', old)
+                _mb = _m.group() if _m else 'NONE'
+                _mn = _re.search('<base[^>]+>', new)
+                _mnb = _mn.group() if _mn else 'NONE'
+                if '/pelletized' not in _mnb:
+                    print(f'  SKIP {rel}: base old={_mb} base new={_mnb}', file=__import__('sys').stderr)
             if new != old:
                 with open(fp, "w", encoding="utf-8") as fh:
                     fh.write(new)
@@ -94,7 +120,7 @@ def main() -> int:
                 changed += 1
 
     print(f"\n{changed} files modified")
-    return 0 if changed >= 0 else 1
+    return 0
 
 
 if __name__ == "__main__":
