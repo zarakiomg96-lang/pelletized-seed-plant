@@ -87,10 +87,10 @@ jobs:
       contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11d59604169c99144365775c7423927d7f7e9140 # v4.4.0
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Python
-        uses: actions/setup-python@a26af6942ad3ed426615b191c9533fbd4802c0ca # v5.6.0
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.8'
 
@@ -124,22 +124,22 @@ jobs:
       preview-url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11d59604169c99144365775c7423927d7f7e9140 # v4.4.0
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       # <base href="/"> in every HTML page (added by scripts/add-base-tag.py
       # at v3.1) makes all absolute paths resolve correctly at any depth.
       # No subpath-safe rewrite needed — the base tag handles it.
       - name: Setup Pages
-        uses: actions/configure-pages@45bfe01d784fd09908492efd4b9b940e4ab7be17 # v6.0.0
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
       - name: Upload Pages artifact (full repo tree, no build step)
-        uses: actions/upload-pages-artifact@fc324d3101fd69ba1d80362143093952f4c0ee10 # v5.0.0
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: '.'
 
       - name: Deploy to GitHub Pages (per-PR deployment_path)
         id: deployment
-        uses: actions/deploy-pages@cd2ce8f45a706346b0ed2347209e984fe75aa7a8 # v5.0.0
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
         with:
           deployment_path: pr-${{ github.event.pull_request.number }}
 
@@ -191,22 +191,22 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11d59604169c99144365775c7423927d7f7e9140 # v4.4.0
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       # <base href="/"> in every HTML page handles subpath resolution
       # for project pages. No sed rewrite needed — absolute paths like
       # `/assets/...` resolve correctly at any URL depth.
       - name: Setup Pages
-        uses: actions/configure-pages@45bfe01d784fd09908492efd4b9b940e4ab7be17 # v6.0.0
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
       - name: Upload Pages artifact (full repo tree, no build step)
-        uses: actions/upload-pages-artifact@fc324d3101fd69ba2d80362143093952f4c0ee10 # v5.0.0
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: '.'
 
       - name: Deploy to GitHub Pages (root /<repo>/)
         id: deployment
-        uses: actions/deploy-pages@cd2ce8f45a706346b0ed2347209e984fe75aa7a8 # v5.0.0
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
         # NOTE: no `deployment_path` → artifact lands at the canonical
         # project URL. Preview deploys use deployment_path: pr-N → /pr-N/.
 
@@ -220,7 +220,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11d59604169c99144365775c7423927d7f7e9140 # v4.4.0
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       # Lighthouse budget audit (v2.8.1: URL via action input, not env-var-in-JSON).
       # Runs against the live preview URL produced by the preview-deploy
