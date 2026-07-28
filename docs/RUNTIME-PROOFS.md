@@ -152,9 +152,9 @@ Agregar dos `<url>` blocks al sitemap, **respetando el orden visual** (los
 procesos van antes que cualquier otra cosa que se sume en el futuro):
 
 ```xml
-<url><loc>https://example.com/procesos/entrega.html</loc>
+<url><loc>https://zarakiomg96-lang.github.io/pelletized-seed-plant/procesos/entrega.html</loc>
      <changefreq>monthly</changefreq><priority>0.8</priority></url>
-<url><loc>https://example.com/procesos/en/delivery.html</loc>
+<url><loc>https://zarakiomg96-lang.github.io/pelletized-seed-plant/procesos/en/delivery.html</loc>
      <changefreq>monthly</changefreq><priority>0.8</priority></url>
 ```
 
@@ -265,7 +265,7 @@ Documentá la nueva ficha siguiendo el patrón de §9.2.7:
 
 - Agregá la fila en §3 IA table (proceso 08 al final).
 - Nueva subsección §9.2.8 con bloque `next-step →` (none — fin del pipeline).
-- Bumpeá a `v2.1` en §13 con una nota explicando la cadena de cambios.
+- Bumpeá a `v2.1` en [`CHANGELOG.md`](../CHANGELOG.md) con una nota explicando la cadena de cambios.
 
 ### 4.8 Correr el gate
 
@@ -395,8 +395,8 @@ necesitás bajar, ajustá la línea `timeout=60` en
 
 ## 7. Referencias cruzadas
 
-- `SPEC.md §15.3.1 item 14` — descripción formal del grupo #14.
-- `SPEC.md §13 v2.0 row` — change log con el momento en que este grupo
+- `docs/GATE-CONTRACT.md item 14` — descripción formal del grupo #14.
+- `CHANGELOG.md v2.0` — change log con el momento en que este grupo
   entró al gate y el BUG-005 que destapó.
 - `scripts/smoke-site.py` — el script canónico. ~260 líneas, totalmente
   legible de arriba a abajo.
@@ -412,4 +412,4 @@ necesitás bajar, ajustá la línea `timeout=60` en
 > **Última revisión**: este documento entra en vigencia con `v2.0` del
 > spec. Si cambia el comportamiento del probe (nuevas categorías de drift,
 > nuevos tags cubiertos, etc.), actualizar acá **y** en
-> `SPEC.md §15.3.1 item 14` al mismo tiempo.
+> `docs/GATE-CONTRACT.md item 14` al mismo tiempo.

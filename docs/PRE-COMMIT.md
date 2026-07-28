@@ -4,7 +4,7 @@ The SDD gate runs as a git pre-commit hook at `.git/hooks/pre-commit`.
 This doc explains what it does, when it triggers, and how a human
 operator extends it. For drift-detection runtime proofs (group #14 of
 the gate) see `docs/RUNTIME-PROOFS.md`. For the spec-side contract see
-`SPEC.md §15.3.1 item 16` and `SPEC.md §13 v2.2`.
+`docs/GATE-CONTRACT.md item 16` and `CHANGELOG.md v2.2`.
 
 ## 1. Why it exists
 
@@ -166,7 +166,7 @@ same hook, drift impossible.
   silently does nothing. Mitigation: surface this in onboarding
   docs or wrap it in a `make bootstrap` target.
 
-See SPEC.md §15.3.1 item 16 for the contract side. See §13 v2.4
+See docs/GATE-CONTRACT.md item 16 for the contract side. See CHANGELOG.md v2.4
 for the changelog row that introduced this pattern.
 
 ## 7. Cross-references
@@ -175,9 +175,9 @@ for the changelog row that introduced this pattern.
   port allocator (`4321-4330`), drift categories
   (`declared-not-served` / `served-but-unlisted`), smoke-site.py
   walkthrough for when you add a process 08.
-- `SPEC.md §15.3.1 item 16` — gate contract side of pre-commit
+- `docs/GATE-CONTRACT.md item 16` — gate contract side of pre-commit
   wiring (matches this doc 1:1).
-- `SPEC.md §13 v2.2` — when this hook landed + the cadence of
+- `CHANGELOG.md v2.2` — when this hook landed + the cadence of
   contracts to update if you bump the trivial whitelist or the 30 s
   cap.
 - `scripts/check-spec.py` — wrapper that exposes `--scope` +

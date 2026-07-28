@@ -17,7 +17,7 @@ is safe to wire into any workflow that runs on file change or before commit.
 Works on Windows / macOS / Linux with the system Python (>= 3.8).
 
 Reference:
-    SPEC.md §15.3.1   — contract that the gate enforces.
+    docs/GATE-CONTRACT.md  — contract that the gate enforces.
     SPEC.md §15.3     — how to write a new validator for a BUG-* or PEND-*.
     SPEC.md §15.3.X   — pre-commit wiring (--scope + --timeout contract).
 """
@@ -74,7 +74,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Run spec-lint.py (the SDD gate) and propagate its exit code. "
-            "See SPEC.md §15.3.1 for the contract that the gate enforces."
+            "See docs/GATE-CONTRACT.md for the contract that the gate enforces."
         )
     )
     parser.add_argument(

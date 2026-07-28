@@ -12,33 +12,7 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
-    const isFileProtocol = location.protocol === 'file:';
     const isEnglish = path.startsWith('/en') || path.endsWith('/en/') || /\/en\/[^/]+\.html$/.test(path);
-
-    /* --- file:// path resolver ------------------------------------------------
-       Si el sitio se abre con doble click (file://) los href absolutos del toggle
-       y del brand no resuelven. Convertimos /algo → path relativo a la posición. */
-    if (isFileProtocol) {
-      const fileBase = decodeURIComponent(path.replace(/\/[^/]*$/, '')) || '';
-      const fromDir = fileBase.replace(/^.*\//, '');
-      document.querySelectorAll('a[href^="/"]').forEach((a) => {
-        const abs = a.getAttribute('href');
-        if (!abs || abs === '/' || abs.startsWith('//')) return;
-        let target = abs.replace(/^\/+/, '');
-        // Calcular relativización desde ubicación actual
-        if (fromDir === target.split('/')[0] || target.startsWith(fromDir + '/')) {
-          target = target.slice(fromDir.length + 1);
-        } else if (target.startsWith('assets/')) {
-          // Up-steps iguales a profundidad del path actual menos 1
-          const depth = fileBase.split('/').filter(Boolean).length;
-          target = '../'.repeat(depth) + target;
-        } else {
-          const depth = fileBase.split('/').filter(Boolean).length;
-          target = '../'.repeat(depth) + target;
-        }
-        a.setAttribute('href', target);
-      });
-    }
 
     /* --- Lenguaje toggle active state ---------------------------------------- */
     const toggle = document.querySelector('.lang-toggle');

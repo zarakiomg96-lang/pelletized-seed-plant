@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="brand" viewBox="0 0 24 24">
+    <path d="M12 3 L19 14 a8 7 0 1 1 -14 0 z" fill="#c19a3b"/><path d="M10 13 q2 -2 4 0" stroke="#0c1f17" stroke-width="1.4" fill="none" stroke-linecap="round"/><circle cx="12" cy="15" r="1" fill="#0c1f17"/>
+  </symbol>
+  <symbol id="play" viewBox="0 0 24 24">
+    <path d="M8 5 v14 l11 -7 z"/>
+  </symbol>
+  <symbol id="timeline-recepcion" viewBox="0 0 24 24">
+    <path d="M3 8 h18 v10 a2 2 0 0 1 -2 2 h-14 a2 2 0 0 1 -2 -2 z M3 8 l9 -5 l9 5" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="timeline-prelimpieza" viewBox="0 0 24 24">
+    <path d="M4 12 h16 M8 8 v8 m4 -6 v4 m4 -2 v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="timeline-limpieza-fina" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.4"/><circle cx="12" cy="12" r="3" fill="currentColor"/>
+  </symbol>
+  <symbol id="timeline-peletizacion" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="2" fill="currentColor"/>
+  </symbol>
+  <symbol id="timeline-envasado" viewBox="0 0 24 24">
+    <path d="M5 8 h14 l-1 11 a2 2 0 0 1 -2 2 h-8 a2 2 0 0 1 -2 -2 z M5 8 a4 4 0 0 1 4 -4 h6 a4 4 0 0 1 4 4" stroke="currentColor" stroke-width="1.4" fill="none"/>
+  </symbol>
+  <symbol id="timeline-control-calidad" viewBox="0 0 24 24">
+    <path d="M5 12 l4 4 l10 -10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="timeline-almacen" viewBox="0 0 24 24">
+    <path d="M3 21 h18 M5 21 v-9 h6 v9 M13 21 v-12 h6 v12 M5 12 l4 -7 h4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round"/>
+  </symbol>
+</svg>

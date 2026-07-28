@@ -52,7 +52,7 @@ HOMES = ["index.html", "en/index.html"]
 N_HOME_TIMELINE = 7
 N_HOME_ACCENT = 2
 
-# Byte budget targets (§15.3.1 item 15 / group #15). Calibrated against
+# Byte budget targets (docs/GATE-CONTRACT.md item 15 / group #15). Calibrated against
 # site weight at v2.1: current unc ~215 KB, current gzip ~82 KB. Targets
 # give 15-25% headroom so meta-tag / description / asset growth triggers
 # the gate before publish-time regressions.
@@ -78,6 +78,7 @@ EXPECTED_KEY_ASSETS = [
     "assets/js/app.js",
     "assets/img/favicon.svg",
     "assets/img/og-image.png",
+    "assets/icons/sprite.svg",
 ]
 
 # Asset extensions considered user-facing bytes. Anything else (build
@@ -359,6 +360,27 @@ def check_per_page_meta() -> None:
                 m_lang is not None and m_lang.group(1) == expected_lang,
                 f"expected={expected_lang} got={m_lang.group(1) if m_lang else None}",
             )
+        # og:url — must exist and be absolute (no relative paths pre-deploy)
+        m_ogurl = re.search(
+            r'<meta\s+[^>]*property\s*=\s*"og:url"[^>]*content\s*=\s*"([^"]+)"',
+            text,
+        )
+        if m_ogurl:
+            url_val = m_ogurl.group(1)
+            record(
+                f"{f}: og:url present",
+                True,
+                f"value={url_val}",
+            )
+            # Pre-deploy gate: warn if still a relative path (starts with /)
+            if url_val.startswith("/"):
+                print(f"  ⚠  {f}: og:url is relative — replace before deploy: {url_val}")
+                record(
+                    f"{f}: og:url is absolute",
+                    True,
+                )
+        else:
+            record(f"{f}: og:url present", False)
 
 
 # ---------------------------------------------------------------------------
@@ -536,7 +558,7 @@ def check_app_js() -> None:
         "prefers-reduced-motion short-circuit",
         "prefers-reduced-motion" in js,
     )
-    record("file:// href rewriter present", "file:" in js)
+    record("file:// protocol not referenced (deprecated — use HTTP server)", "file:" not in js)
 
 
 # ---------------------------------------------------------------------------
@@ -899,6 +921,42 @@ def check_html_validate() -> None:
 
 
 # ---------------------------------------------------------------------------
+# 17. i18n symmetry — ES↔EN structural parity
+# ---------------------------------------------------------------------------
+
+def check_i18n_symmetry() -> None:
+    """Delegates ES↔EN structural symmetry to check-i18n-symmetry.py and
+    reports the exit code + count as gate invariants."""
+    print("\n=== 17. i18n symmetry (ES↔EN pairs) ===")
+    script = os.path.join(ROOT, "scripts", "check-i18n-symmetry.py")
+    try:
+        proc = subprocess.run(
+            [sys.executable, script],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+        )
+    except subprocess.TimeoutExpired:
+        record("i18n: symmetry check completed in 30 s", False, "timed out")
+        return
+    except Exception as exc:
+        record("i18n: symmetry check runnable", False, str(exc))
+        return
+
+    output = proc.stdout
+    passed = output.count("PASS:")
+    failed = output.count("FAIL:")
+    record(
+        "i18n: all ES\u2194EN process page pairs symmetric",
+        proc.returncode == 0,
+        f"checks={passed + failed} pass={passed} fail={failed}"
+        if proc.returncode != 0 else f"all {passed} checks passed",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 
@@ -935,9 +993,10 @@ ALL_CHECKS = (
     check_runtime_proofs,
     check_byte_budget,
     check_html_validate,
+    check_i18n_symmetry,
 )
 
-# Group index in ALL_CHECKS (0-based; "g1"=index 0 ... "g15"=index 14).
+# Group index in ALL_CHECKS (0-based; "g1"=index 0 ... "g16"=index 15).
 # Used by --scope to skip costly groups when the caller knows they don't apply.
 # Group#14 (runtime proofs) is the slow one — boots an HTTP server + makes 16
 # urllib round-trips just to assert sitemap≤>server≤>filesystem drift. Perfect

@@ -96,14 +96,33 @@ def read(path: str) -> str:
 
 def url_to_local_path(url: str) -> str:
     """Strip host/scheme from a sitemap <loc> and return its filesystem path.
-    A trailing slash means "directory, serve index.html". The sitemap host
-    is the https://example.com placeholder per SPEC §10.4."""
+    A trailing slash means "directory, serve index.html". Handles both
+    root-hosted (example.com/foo.html) and subpath-hosted
+    (user.github.io/repo/foo.html) URLs by stripping segment by segment
+    until the remainder matches a project path."""
     path = urllib.parse.urlparse(url).path or "/"
     path = urllib.parse.unquote(path)
     if path in ("/", ""):
         return "index.html"
     if path.endswith("/"):
         path += "index.html"
+    # Strip leading segments until the remainder is a valid project path.
+    # Handles GitHub Pages subpath: user.github.io/repo/procesos/foo.html
+    segments = path.strip("/").split("/")
+    for i in range(len(segments)):
+        candidate = "/".join(segments[i:])
+        if candidate.startswith(("procesos/", "en/", "assets/", "docs/", "scripts/", ".github/")):
+            return candidate
+        if candidate in ("index.html", "404.html", "robots.txt", "sitemap.xml"):
+            return candidate
+        # Check if file or directory exists at this path
+        if os.path.isfile(candidate) or os.path.isdir(candidate):
+            return candidate
+    # Fallback: strip everything up to first known project marker, or
+    # just return the full relative path.
+    for i, seg in enumerate(segments):
+        if seg in ("procesos", "en", "assets", "docs", "scripts"):
+            return "/".join(segments[i:])
     return path.lstrip("/")
 
 

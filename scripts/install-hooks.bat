@@ -12,7 +12,7 @@ REM   2. `git config core.hooksPath .githooks` (cross-platform: tells
 REM      Git to look in the version-controlled `.githooks/` directory
 REM      for hooks).
 REM
-REM Reference: SPEC.md §15.3.1 item 16 + docs/PRE-COMMIT.md §6.
+REM Reference: docs/GATE-CONTRACT.md item 16 + docs/PRE-COMMIT.md §6.
 
 setlocal
 

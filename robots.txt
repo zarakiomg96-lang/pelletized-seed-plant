@@ -1,5 +1,5 @@
 User-agent: *
 Allow: /
 
-# Reemplazar https://example.com por el dominio real antes de publicar.
-Sitemap: https://example.com/sitemap.xml
+# Reemplazar https://zarakiomg96-lang.github.io/pelletized-seed-plant por el dominio real antes de publicar.
+Sitemap: https://zarakiomg96-lang.github.io/pelletized-seed-plant/sitemap.xml

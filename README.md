@@ -26,7 +26,7 @@ Construido como sitio estático (HTML + CSS + JS) — sin build step, sin depend
 │   ├── img/                    SVG decorativos (logo, favicon, og-image.png)
 │   └── video/                  Carpeta para tu video institucional
 ├── scripts/                    Toolchain de validación (SDD)
-│   ├── spec-lint.py            Gate ejecutable de §15.3.1
+│   ├── spec-lint.py            Gate ejecutable (ver docs/GATE-CONTRACT.md)
 │   ├── check-spec.py           Entrada portable (Python)
 │   ├── html-validate.py        Validador de marcado HTML
 │   ├── smoke-site.py           Probe de runtime (sitemap ↔ server)
@@ -37,7 +37,12 @@ Construido como sitio estático (HTML + CSS + JS) — sin build step, sin depend
 │   ├── check-spec.{sh,bat}     Shims POSIX/Windows
 │   ├── smoke-site.{sh,bat}     Shims POSIX/Windows
 │   └── install-hooks.{sh,bat}  Instaladores de hooks
+├── CHANGELOG.md                Historial de versiones
 ├── SPEC.md                     Contrato Specification-Driven
+├── docs/                       Documentación operativa
+│   ├── GATE-CONTRACT.md        Detalle del gate (items 1–27)
+│   ├── PRE-COMMIT.md           Guía del pre-commit hook
+│   └── RUNTIME-PROOFS.md       Runtime proofs y smoke tests
 └── README.md                   Esta guía
 ```
 
@@ -75,7 +80,7 @@ npx --yes serve -l 4321 .
 
 ## Cómo correr el gate (SDD)
 
-El proyecto usa **Specification-Driven Development** (ver `SPEC.md` §10 y §15.3.1). El gate ejecutable vive en `scripts/spec-lint.py` y aplica los 13 grupos de checks sobre el código + la spec. Cualquier edit de código debe pasar el gate antes de mergear.
+El proyecto usa **Specification-Driven Development** (ver `SPEC.md` §10 y [`docs/GATE-CONTRACT.md`](./docs/GATE-CONTRACT.md)). El gate ejecutable vive en `scripts/spec-lint.py` y aplica los 13 grupos de checks sobre el código + la spec. Cualquier edit de código debe pasar el gate antes de mergear.
 
 Formas equivalentes de invocarlo:
 
@@ -181,7 +186,7 @@ Para GitHub Pages: subí todo a un repo, activá Pages apuntando a la raíz.
 
 ### Antes de publicar
 
-1. Reemplazá `og:image`, `og:url` y las URLs de `sitemap.xml`, `robots.txt` y JSON-LD con URLs absolutas de tu dominio final (actualmente usan `https://example.com`).
+1. Reemplazá `og:image`, `og:url` y las URLs de `sitemap.xml`, `robots.txt` y JSON-LD con URLs absolutas de tu dominio final (actualmente usan `https://zarakiomg96-lang.github.io/pelletized-seed-plant`).
 2. Generá una imagen OG propia de 1200 × 630 px y guardala en `assets/img/og-image.png`.
 3. Si agregás el video institucional, actualizá el placeholder del home y reemplazalo por un `<video>`.
 

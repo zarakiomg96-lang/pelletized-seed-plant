@@ -11,7 +11,7 @@
 #
 # Wall-clock budget: gate runs ~60 s on a clean state, ~120 s worst-case
 # at byte-budget under load (BUDGET_*_KB_* in spec-lint.py). The
-# 5-minute timeout has ~3x headroom; bump both this file + §15.3.1 item
+# 5-minute timeout has ~3x headroom; bump both this file + docs/GATE-CONTRACT.md item
 # 17 if any step starts scraping that ceiling. Lighthouse step reserves
 # 10 min for the per-page Chrome-driven audits.
 #
@@ -26,8 +26,8 @@
 # mirror the gate's input surface (HTML + CSS + JS + sitemap + robots +
 # SPEC + assets + scripts + spec-lint + the workflow itself +
 # .lighthouserc.json). If a new gate check is added that reads a new
-# surface, extend `paths:` in the same v. See SPEC.md §15.3.1 item 17
-# + §13 v2.3.1 for the contract; for the local hook side see
+# surface, extend `paths:` in the same v. See docs/GATE-CONTRACT.md item 17
+# + CHANGELOG.md v2.3.1 for the contract; for the local hook side see
 # `docs/PRE-COMMIT.md`.
 #
 # Actions are SHA-pinned (not tag-pinned) for supply-chain hardening:
@@ -125,20 +125,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11d59604169c99144365775c7423927d7f7e9140 # v4.4.0
 
-      # Subpath-safe rewrite: SPEC §3 uses absolute paths (`/assets/...`).
-      # When deployed under `deployment_path: pr-N/`, the browser resolves
-      # absolute paths against origin (`<owner>.github.io/assets/...`),
-      # NOT against the deployment subpath. This sed step rewrites at
-      # upload time: `href="/X"` → `href="./X"` (same for `src=`) inside
-      # every *.html in the artifact. Source tree and production deploy
-      # remain unchanged — only the upload-root artifact is subpath-safe.
-      # >>> DO NOT REMOVE THIS STEP. <<<
-      # Same rationale as the `deploy` job's rewrite. Without it,
-      # absolute asset paths would 404 against the PR subpath.
-      - name: 'DO NOT REMOVE — Rewrite absolute href/src to relative (subpath-safe) (preview)'
-        run: |
-          find . -type f -name '*.html' -not -path './.git/*' -exec sed -i 's|href="/|href="./|g; s|src="/|src="./|g' {} +
-
+      # <base href="/"> in every HTML page (added by scripts/add-base-tag.py
+      # at v3.1) makes all absolute paths resolve correctly at any depth.
+      # No subpath-safe rewrite needed — the base tag handles it.
       - name: Setup Pages
         uses: actions/configure-pages@45bfe01d784fd09908492efd4b9b940e4ab7be17 # v6.0.0
 
@@ -163,14 +152,14 @@ jobs:
 
   # Production deploy: runs on push to main OR via workflow_dispatch
   # (manual re-run from the Actions tab), after gate passes.
-  # Mirrors preview-deploy (sha-pinned, subpath-safe relative-rewrite,
+  # Mirrors preview-deploy (sha-pinned, <base href="/"> subpath-safe,
   # actions/deploy-pages@v4) but: (1) does NOT fire on PRs —
   # preview-deploy handles those; (2) targets the `github-pages`
   # production environment (preview uses `github-pages-preview`);
   # (3) NO `deployment_path` so the artifact lands at the canonical
   # project URL `/<repo>/`, not under `/pr-N/`. Both deploy paths share
   # the same `gate` job as pre-flight; drift can't reach `/<repo>/`.
-  # See SPEC.md §13 v3.0 + §15.3.1 item 17.
+  # See CHANGELOG.md v3.0 + docs/GATE-CONTRACT.md item 17.
   #
   # OPERATIONAL PREREQUISITE: the `github-pages` environment MUST exist
   # in repo Settings → Environments before this job can run. Without
@@ -202,24 +191,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11d59604169c99144365775c7423927d7f7e9140 # v4.4.0
 
-      # Subpath-safe rewrite for project pages (same rationale as PR
-      # preview): SPEC §3 uses absolute paths (`/assets/...`) which
-      # resolve against origin (`<owner>.github.io/assets/...`),
-      # NOT against the project subpath (`<owner>.github.io/<repo>/`).
-      # sed `href="/X"` → `href="./X"` so production serves correctly
-      # at the canonical root URL. Same step ran in preview-deploy
-      # but at upload time only; the source tree is unchanged.
-      # >>> DO NOT REMOVE THIS STEP. <<<
-      # Browsers resolve `/assets/...` against origin
-      # (`<owner>.github.io/assets/...`), NOT against the project
-      # subpath (`<owner>.github.io/<repo>/assets/...`). Without the
-      # rewrite, every absolute asset path on production returns 404.
-      # The rewrite mutates the *upload-time artifact* only; the
-      # source tree stays absolute (file:// and dev-server friendly).
-      - name: 'DO NOT REMOVE — Rewrite absolute href/src to relative (subpath-safe) (main)'
-        run: |
-          find . -type f -name '*.html' -not -path './.git/*' -exec sed -i 's|href="/|href="./|g; s|src="/|src="./|g' {} +
-
+      # <base href="/"> in every HTML page handles subpath resolution
+      # for project pages. No sed rewrite needed — absolute paths like
+      # `/assets/...` resolve correctly at any URL depth.
       - name: Setup Pages
         uses: actions/configure-pages@45bfe01d784fd09908492efd4b9b940e4ab7be17 # v6.0.0
 

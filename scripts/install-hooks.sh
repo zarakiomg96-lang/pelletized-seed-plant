@@ -13,7 +13,7 @@
 #      to look in the version-controlled `.githooks/` directory for
 #      hooks, replacing the per-clone default `.git/hooks/`).
 #
-# Reference: SPEC.md §15.3.1 item 16 + docs/PRE-COMMIT.md §6.
+# Reference: docs/GATE-CONTRACT.md item 16 + docs/PRE-COMMIT.md §6.
 
 set -e
 
