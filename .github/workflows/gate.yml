@@ -1,4 +1,5 @@
 # .github/workflows/gate.yml — SDD gate on PR + push to main.
+# Environments: github-pages (production) + github-pages-preview (PR previews).
 #
 # Jobs (declarative order matches runtime):
 #   1. gate (always)             — runs scripts/spec-lint.py full scope.
