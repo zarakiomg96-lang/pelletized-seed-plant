@@ -146,7 +146,8 @@ jobs:
       - name: Comment preview URL on PR (sticky / idempotent across pushes)
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: preview-url            message: |
+          header: preview-url
+          message: |
               🔗 **Preview URL**: ${{ steps.deployment.outputs.page_url }}
 
               _Re-deploys on every push to this PR. Lighthouse budget audit runs against this URL._
