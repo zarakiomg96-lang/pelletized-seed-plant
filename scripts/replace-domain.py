@@ -76,6 +76,39 @@ def _replacements(text: str, new_domain: str) -> list[tuple[str, str]]:
             f'property="og:image" content="https://{new_domain}/{m.group(1)}"',
         ))
 
+    # 4. Base href: extraer subpath del dominio nuevo si lo tiene
+    #    ej: "zarakiomg96-lang.github.io/pelletized-seed-plant" -> "/pelletized-seed-plant/"
+    #    ej: "semillas.iit.cu"                                  -> "/"
+    domain_path = "/"
+    if "/" in new_domain:
+        domain_path = "/" + new_domain.split("/", 1)[1] + "/"
+    for m in re.finditer(
+        r'<base\s+href="([^"]+)"',
+        text,
+    ):
+        old_val = m.group(0)
+        result.append((
+            old_val,
+            f'<base href="{domain_path}">',
+        ))
+
+    # 5. Canonical/alternate links que usan el subpath viejo
+    for m in re.finditer(
+        r'href="https?://[^/]+/[^/]+/(index\.html|en/index\.html)"',
+        text,
+    ):
+        old_val = m.group(0)
+        parsed = old_val.split("/")
+        # Reemplaza el subpath: https://domain/SUBPATH/rest -> https://domain/NEWPATH/rest
+        new_domain_only = new_domain.split("/")[0]
+        new_val = old_val.replace(parsed[2], new_domain_only)
+        if domain_path != "/":
+            new_val = new_val.replace("/" + parsed[3] + "/", domain_path)
+        else:
+            # Sin subpath: https://domain/SUBPATH/index.html -> https://domain/index.html
+            new_val = new_val.replace("/" + parsed[3] + "/", "/")
+        result.append((old_val, new_val))
+
     return result
 
 

@@ -172,6 +172,18 @@ def parse_sitemap_urls(path: str) -> list[str]:
     return [u.text for u in tree.findall(f".//{SM_NS}loc") if u.text]
 
 
+def _base_href_path(text: str) -> str | None:
+    """Return the path part of <base href> if present, or None."""
+    m = re.search(r'<base\s+href="([^"]+)"', text, re.IGNORECASE)
+    if not m:
+        return None
+    href = m.group(1).strip()
+    # Strip scheme+host if present
+    parsed = urllib.parse.urlparse(href)
+    path = parsed.path or "/"
+    return path
+
+
 def linked_local_paths(html_files: list[str]) -> set[str]:
     """Grep every HTML for href / src attributes on tag names of interest.
     Resolve each target against the HTML's own dir so ../assets/... ends up
@@ -188,6 +200,7 @@ def linked_local_paths(html_files: list[str]) -> set[str]:
         except Exception:
             continue
         base_dir = os.path.dirname(f)
+        base_href_path = _base_href_path(text)
         for m in rx.finditer(text):
             target = m.group(3).strip()
             if not target:
@@ -200,13 +213,27 @@ def linked_local_paths(html_files: list[str]) -> set[str]:
             target = target.split("?", 1)[0].split("#", 1)[0]
             if not target:
                 continue
-            joined = (
-                os.path.normpath(os.path.join(base_dir, target))
-                if base_dir else os.path.normpath(target)
-            )
-            # Strip Windows drive letters if any slipped through.
-            joined = re.sub(r"^[a-zA-Z]:[\\/]", "", joined)
-            linked.add(to_posix(joined).lstrip("/"))
+            # Resolve against <base href> (if present) or the file's dir.
+            # Strip the base path prefix so linked paths match sitemap paths.
+            if base_href_path is not None:
+                # Resolve relative target against the base href path.
+                resolved = urllib.parse.urljoin(base_href_path, target)
+                resolved_path = urllib.parse.urlparse(resolved).path
+                resolved_path = urllib.parse.unquote(resolved_path)
+                # Strip the base href prefix itself
+                if resolved_path.startswith(base_href_path):
+                    joined = resolved_path[len(base_href_path):]
+                else:
+                    joined = resolved_path.lstrip("/")
+            else:
+                joined = (
+                    os.path.normpath(os.path.join(base_dir, target))
+                    if base_dir else os.path.normpath(target)
+                )
+                joined = re.sub(r"^[a-zA-Z]:[\\/]", "", joined)
+                joined = to_posix(joined).lstrip("/")
+            joined = joined.lstrip("/")
+            linked.add(joined)
     return linked
 
 

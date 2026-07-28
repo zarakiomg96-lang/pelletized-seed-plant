@@ -126,9 +126,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      # <base href="/"> in every HTML page (added by scripts/add-base-tag.py
-      # at v3.1) makes all absolute paths resolve correctly at any depth.
-      # No subpath-safe rewrite needed — the base tag handles it.
+      - name: Fix base href for Pages subpath
+        run: python scripts/fix-base-path.py
+
+      # <base href="/"> → <base href="/<repo>/"> and rewrite href/src paths
+      # to be relative to the base so they resolve correctly under the GH
+      # Pages project site subpath.
       - name: Setup Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
@@ -193,9 +196,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      # <base href="/"> in every HTML page handles subpath resolution
-      # for project pages. No sed rewrite needed — absolute paths like
-      # `/assets/...` resolve correctly at any URL depth.
+      - name: Fix base href for Pages subpath
+        run: python scripts/fix-base-path.py
+
+      # <base href="/"> → <base href="/<repo>/"> and rewrite href/src paths
+      # to be relative to the base so they resolve correctly under the GH
+      # Pages project site subpath.
       - name: Setup Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 

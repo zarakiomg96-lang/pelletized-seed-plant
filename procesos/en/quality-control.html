@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <base href="/">
+  <base href="pelletized-seed-plant/">
   <title>Quality Control — Pelleted Seed Plant</title>
   <meta name="description" content="Process 06/07 of the Pelleted Seed Plant: the decision node that measures germination, physical purity and final moisture. Binding for FAO/ISTA/ISO 9001 certification. The lab specialist signs the trials and the binding quality decision.">
-  <link rel="icon" href="../../assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../assets/css/styles.css">
-  <link rel="canonical" href="/procesos/en/quality-control.html">
-  <link rel="alternate" hreflang="es" href="/procesos/control-calidad.html" />
-  <link rel="alternate" hreflang="en" href="/procesos/en/quality-control.html" />
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="canonical" href="procesos/en/quality-control.html">
+  <link rel="alternate" hreflang="es" href="procesos/control-calidad.html" />
+  <link rel="alternate" hreflang="en" href="procesos/en/quality-control.html" />
   <meta property="og:title" content="Quality Control — Pelleted Seed Plant">
   <meta property="og:description" content="Process 06/07 of the Pelleted Seed Plant: the decision node that measures germination, physical purity and final moisture. Binding for FAO/ISTA/ISO 9001 certification. The lab specialist signs the trials and the binding quality decision.">
   <meta property="og:type" content="website">
@@ -30,15 +30,15 @@
 
   <header class="topbar">
     <div class="topbar__inner">
-      <a class="brand" href="../../en/index.html">
+      <a class="brand" href="en/index.html">
         <span class="brand__mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><use href="/assets/icons/sprite.svg#brand"/></svg>
+          <svg viewBox="0 0 24 24"><use href="assets/icons/sprite.svg#brand"/></svg>
         </span>
         <span class="brand__text">Pelleted Seed Plant<small>Tobacco Research Institute</small></span>
       </a>
       <nav class="lang-toggle" aria-label="Language">
-        <a href="../control-calidad.html" data-lang="es">ES</a>
-        <a href="quality-control.html" data-lang="en">EN</a>
+        <a href="procesos/control-calidad.html" data-lang="es">ES</a>
+        <a href="procesos/en/quality-control.html" data-lang="en">EN</a>
       </nav>
     </div>
   </header>
@@ -46,7 +46,7 @@
   <main>
     <section class="proc-hero proc-hero--qc">
       <div class="container">
-        <a class="proc-hero__back" href="../../en/index.html">Home</a>
+        <a class="proc-hero__back" href="en/index.html">Home</a>
         <p class="eyebrow">Process 06 / 07 · decision node</p>
         <h1>Quality Control</h1>
         <p class="proc-hero__lede">The lab samples the lot and measures germination, physical purity and final moisture. The decision that leaves here is binding: it defines whether the lot is certified or routed to rework or discard.</p>
@@ -110,7 +110,7 @@
         <p>Quality control closes the algorithmic cycle. The system does not allow a lot flagged for <em>rework</em> to reach the finished-product warehouse, nor does it allow an approved lot to return to the flow. State transitions are validated by two parallel fronts: the lab result and the database's ACID guarantees. If a network failure prevents the COMMIT in PostgreSQL, the entire lot reverts to its previous state — without leaving ghost records.</p>
       </article>
 
-      <a class="next-step" href="finished-product-warehouse.html">
+      <a class="next-step" href="procesos/en/finished-product-warehouse.html">
         <div>
           <p class="next-step__label">Continue with step 07</p>
           <p class="next-step__title">Finished Product Warehouse</p>
@@ -130,17 +130,17 @@
         <div>
           <p class="footer__heading">Processes</p>
           <ul>
-            <li><a href="reception.html">Intake</a></li>
-            <li><a href="pelleting.html">Pelleting</a></li>
-            <li><a href="packaging.html">Packaging</a></li>
-            <li><a href="quality-control.html">Quality control</a></li>
+            <li><a href="procesos/en/reception.html">Intake</a></li>
+            <li><a href="procesos/en/pelleting.html">Pelleting</a></li>
+            <li><a href="procesos/en/packaging.html">Packaging</a></li>
+            <li><a href="procesos/en/quality-control.html">Quality control</a></li>
           </ul>
         </div>
         <div>
           <p class="footer__heading">Languages</p>
           <ul>
-            <li><a href="../../index.html">Español</a></li>
-            <li><a href="../../en/index.html">English</a></li>
+            <li><a href="index.html">Español</a></li>
+            <li><a href="en/index.html">English</a></li>
           </ul>
         </div>
         <div>
@@ -155,6 +155,6 @@
     </div>
   </footer>
 
-  <script src="../../assets/js/app.js"></script>
+  <script src="assets/js/app.js"></script>
 </body>
 </html>
