@@ -100,9 +100,9 @@ jobs:
       - name: Assert job-name contract (branch-protection pins "spec-lint full scope")
         if: always()
         run: |
-          if [ "$GITHUB_JOB" != "spec-lint full scope" ]; then
-            echo "::error::Contract violation: \$GITHUB_JOB='$GITHUB_JOB' != 'spec-lint full scope'. Branch protection will silently stop matching this workflow." >&2
-            echo "::error::Revert the rename or update the branch-protection rule in repo settings." >&2
+          if [ "$GITHUB_JOB" != "gate" ]; then
+            echo "::error::Contract violation: GITHUB_JOB='$GITHUB_JOB' != 'gate'. Branch protection display-name rules may silently stop matching." >&2
+            echo "::error::If you renamed the job_id, update this assertion AND the branch-protection rule in repo settings." >&2
             exit 1
           fi
 
